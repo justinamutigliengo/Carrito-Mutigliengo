@@ -103,9 +103,10 @@ function mostrarModalCarrito() {
 
   contenidoCarrito.innerHTML = "";
 
-  carrito.forEach((producto) => {
+  carrito.forEach((producto, index) => {
     const productoDiv = document.createElement("div");
-    productoDiv.innerHTML = `${producto.nombre} - $${producto.precio}`;
+    productoDiv.innerHTML = `${producto.nombre} - $${producto.precio} 
+      <button onclick="eliminarDelCarrito(${index})">Eliminar</button>`;
     contenidoCarrito.appendChild(productoDiv);
   });
 
@@ -126,3 +127,21 @@ window.addEventListener("click", (event) => {
     cerrarModalCarrito();
   }
 });
+
+function guardarCarritoLocalStorage() {
+  localStorage.setItem("carrito", JSON.stringify(carrito));
+}
+
+agregarAlCarrito();
+
+mostrarCarrito();
+
+buscarProductoPorNombre();
+
+filtrarProductos();
+
+mostrarModalCarrito();
+
+cerrarModalCarrito();
+
+guardarCarritoLocalStorage();
