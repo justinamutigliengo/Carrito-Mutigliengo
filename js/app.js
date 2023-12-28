@@ -1,61 +1,124 @@
 let carrito = [];
 
-const productos = [
-  {
-    id: 1,
-    nombre: "Teclado Logitech",
-    precio: 55500,
-    img: "../images/teclado.webp",
-  },
-  {
-    id: 2,
-    nombre: "Monitor Samsung",
-    precio: 125250,
-    img: "../images/monitor.webp",
-  },
-  {
-    id: 3,
-    nombre: "Parlantes Thonet & Vander",
-    precio: 435920,
-    img: "../images/parlantes.webp",
-  },
-  {
-    id: 4,
-    nombre: "Mouse Gamer Logitech",
-    precio: 33420,
-    img: "../images/mouse.webp",
-  },
-  {
-    id: 5,
-    nombre: "Disco sólido",
-    precio: 38120,
-    img: "../images/discosolido.webp",
-  },
-];
-
 for (const producto of productos) {
   let contenedor = document.createElement("div");
 
   contenedor.innerHTML = `<p>${producto.nombre}</p>
-  <img src="${producto.img}" alt="${producto.nombre}" class="img-fluid">
+                          <img src="${producto.img}" alt="${producto.nombre}" class="img-fluid">
                           <b>$ ${producto.precio}</b>
                           <button onclick="agregarAlCarrito(${producto.id})">Agregar al carrito</button>`;
   document.body.appendChild(contenedor);
 }
 
-function agregarAlCarrito(productoId) {
-  const productoEncontrado = productos.find(
-    (producto) => producto.id === productoId
-  );
+Swal.fire({
+  title: "15% OFF",
+  text: "Suscribite a nuestro newsletter y recibí un 15% OFF en tu próxima compra",
+  icon: "warning",
+  showCancelButton: true,
+  confirmButtonColor: "#3085d6",
+  cancelButtonColor: "#d33",
+  confirmButtonText: "Confirmar",
+  width: 400,
+  height: 200,
+  customClass: {
+    container: "mi-alerta",
+  },
+}).then((result) => {
+  if (result.isConfirmed) {
+    Swal.fire("Deleted!", "Your file has been deleted.", "success");
+  }
+});
 
-  if (productoEncontrado) {
-    carrito.push(productoEncontrado);
-    console.log(`Producto "${productoEncontrado.nombre}" agregado al carrito.`);
-    mostrarCarrito();
-  } else {
-    console.log("Producto no encontrado.");
+async function cargarProductos() {
+  try {
+    const respuesta = await fetch("productos.json");
+    const productos = await respuesta.json();
+    return productos;
+  } catch (error) {
+    console.error("Error al cargar productos:", error);
+    return [];
   }
 }
+
+function agregarAlCarrito(idProducto) {
+  const productos = JSON.parse(localStorage.getItem("carrito")) || [];
+  const productoEncontrado = productos.find(
+    (producto) => producto.id === idProducto
+  );
+
+  try {
+    if (productoEncontrado) {
+      productoEncontrado.cantidad++;
+    } else {
+      const producto = productos.find((producto) => producto.id === idProducto);
+      productos.push({ id: idProducto, cantidad: 1 });
+    }
+
+    localStorage.setItem("carrito", JSON.stringify(productos));
+    actualizarCarrito();
+  } finally {
+    console.log("Se ejecutó el finally");
+  }
+}
+
+function actualizarCarrito() {
+  const productosCarrito = JSON.parse(localStorage.getItem("carrito")) || [];
+  const contenedorCarrito = document.getElementById("carrito");
+  contenedorCarrito.innerHTML = "";
+
+  const itemsCarrito = productosCarrito.map((producto) => {
+    return `
+      <li>
+        ${producto.nombre} x ${producto.cantidad} - $${
+      producto.precio * producto.cantidad
+    }
+        <button onclick="eliminarDelCarrito(${producto.id})">Eliminar</button>
+      </li>
+    `;
+  });
+
+  contenedorCarrito.innerHTML = itemsCarrito.join("");
+}
+
+function eliminarDelCarrito(idProducto) {
+  const productos = JSON.parse(localStorage.getItem("carrito")) || [];
+  const productosFiltrados = productos.filter(
+    (producto) => producto.id !== idProducto
+  );
+  try {
+    localStorage.setItem("carrito", JSON.stringify(productosFiltrados));
+    actualizarCarrito();
+  } finally {
+    console.log("Se ejecutó el finally");
+  }
+}
+
+function vaciarCarrito() {
+  try {
+    localStorage.removeItem("carrito");
+    actualizarCarrito();
+  } finally {
+    console.log("Se ejecutó el finally");
+  }
+}
+
+cargarProductos()
+  .then((productos) => {
+    const contenedorProductos = document.getElementById("productos");
+    productos.forEach((producto) => {
+      const productoElement = document.createElement("div");
+      productoElement.innerHTML = `
+        <h3>${producto.nombre}</h3>
+        <img src="${producto.imagen}" alt="${producto.nombre}">
+        <p>$${producto.precio}</p>
+        <button onclick="agregarAlCarrito(${producto.id})">Agregar al carrito</button>
+      `;
+      contenedorProductos.appendChild(productoElement);
+    });
+  })
+  .catch((error) => console.error(error));
+
+actualizarCarrito();
 
 function mostrarCarrito() {
   console.log("Carrito de Compras:");
@@ -131,17 +194,3 @@ window.addEventListener("click", (event) => {
 function guardarCarritoLocalStorage() {
   localStorage.setItem("carrito", JSON.stringify(carrito));
 }
-
-agregarAlCarrito();
-
-mostrarCarrito();
-
-buscarProductoPorNombre();
-
-filtrarProductos();
-
-mostrarModalCarrito();
-
-cerrarModalCarrito();
-
-guardarCarritoLocalStorage();
